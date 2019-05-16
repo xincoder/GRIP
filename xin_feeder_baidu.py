@@ -35,18 +35,21 @@ class Feeder(torch.utils.data.Dataset):
 		self.load_data()
 
 		total_num = len(self.all_feature)
-		# # equally choose validation set
-		# train_id_list = list(np.linspace(0, total_num-1, int(total_num*0.8)).astype(int))
-		# val_id_list = list(set(list(range(total_num))) - set(train_id_list))
+		# equally choose validation set
+		train_id_list = list(np.linspace(0, total_num-1, int(total_num*0.8)).astype(int))
+		val_id_list = list(set(list(range(total_num))) - set(train_id_list))
 
-		# last 20% data as validation set
-		train_id_list = list(range(int(total_num*0.8)))
-		val_id_list = list(range(int(total_num*0.8), total_num))
+		# # last 20% data as validation set
+		# train_id_list = list(range(int(total_num*0.8)))
+		# val_id_list = list(range(int(total_num*0.8), total_num))
 
 		if train_val_test.lower() == 'train':
 			self.all_feature = self.all_feature[train_id_list]
 			self.all_adjacency = self.all_adjacency[train_id_list]
 			self.all_mean_xy = self.all_mean_xy[train_id_list]
+			# self.all_feature = self.all_feature
+			# self.all_adjacency = self.all_adjacency
+			# self.all_mean_xy = self.all_mean_xy
 		elif train_val_test.lower() == 'val':
 			self.all_feature = self.all_feature[val_id_list]
 			self.all_adjacency = self.all_adjacency[val_id_list]

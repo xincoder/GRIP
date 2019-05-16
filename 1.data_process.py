@@ -17,7 +17,7 @@ future_frames = 6 # 3 second * 2 frame/second
 total_frames = history_frames + future_frames
 # xy_range = 120 # max_x_range=121, max_y_range=118
 max_num_object = 120 #70 # maximum number of observed objects is 70
-neighbor_distance = 15 #10 # meter
+neighbor_distance = 10 #10 # meter
 
 # Baidu ApolloScape data format:
 # frame_id, object_id, object_type, position_x, position_y, position_z, object_length, pbject_width, pbject_height, heading

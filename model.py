@@ -27,7 +27,7 @@ class Model(nn.Module):
 
 		# build networks
 		spatial_kernel_size = np.shape(A)[0]
-		temporal_kernel_size = 5 # 3
+		temporal_kernel_size = 9 #5 # 3
 		kernel_size = (temporal_kernel_size, spatial_kernel_size)
 		self.data_bn = nn.BatchNorm1d(in_channels * np.shape(A)[1])
 		# self.st_gcn_networks = nn.ModuleList((
@@ -55,6 +55,22 @@ class Model(nn.Module):
 			Graph_Conv_Block(256, 256, kernel_size, 1, **kwargs),
 			Graph_Conv_Block(256, 512, kernel_size, 1, **kwargs),
 		))
+
+		# self.st_gcn_networks = nn.ModuleList((
+		# 	Graph_Conv_Block(in_channels, 64, kernel_size, 1, residual=True, **kwargs),
+		# 	Graph_Conv_Block(64, 64, kernel_size, 1, **kwargs),
+		# 	Graph_Conv_Block(64, 64, kernel_size, 1, **kwargs),
+		# 	Graph_Conv_Block(64, 128, kernel_size, 1, **kwargs),
+		# 	Graph_Conv_Block(128, 128, kernel_size, 1, **kwargs),
+		# 	Graph_Conv_Block(128, 128, kernel_size, 1, **kwargs),
+		# 	Graph_Conv_Block(128, 256, kernel_size, 1, **kwargs),
+		# 	Graph_Conv_Block(256, 256, kernel_size, 1, **kwargs),
+		# 	Graph_Conv_Block(256, 256, kernel_size, 1, **kwargs),
+		# 	Graph_Conv_Block(256, 512, kernel_size, 1, **kwargs),
+		# 	Graph_Conv_Block(512, 512, kernel_size, 1, **kwargs),
+		# 	Graph_Conv_Block(512, 512, kernel_size, 1, **kwargs),
+		# 	Graph_Conv_Block(512, 1024, kernel_size, 1, **kwargs),
+		# ))
 
 		# initialize parameters for edge importance weighting
 		if edge_importance_weighting:
