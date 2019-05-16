@@ -29,7 +29,8 @@ class Model(nn.Module):
 		spatial_kernel_size = np.shape(A)[0]
 		temporal_kernel_size = 9 #5 # 3
 		kernel_size = (temporal_kernel_size, spatial_kernel_size)
-		self.data_bn = nn.BatchNorm1d(in_channels * np.shape(A)[1])
+		# self.data_bn = nn.BatchNorm1d(in_channels * np.shape(A)[1])
+		# self.data_bn_2d = nn.BatchNorm2d(in_channels)
 		# self.st_gcn_networks = nn.ModuleList((
 		# 	Graph_Conv_Block(in_channels, 64, kernel_size, 1, residual=True, **kwargs),
 		# 	Graph_Conv_Block(64, 64, kernel_size, 1, **kwargs),
@@ -44,15 +45,19 @@ class Model(nn.Module):
 		# ))
 
 		self.st_gcn_networks = nn.ModuleList((
+			nn.BatchNorm2d(in_channels),
 			Graph_Conv_Block(in_channels, 64, kernel_size, 1, residual=True, **kwargs),
 			Graph_Conv_Block(64, 64, kernel_size, 1, **kwargs),
 			Graph_Conv_Block(64, 64, kernel_size, 1, **kwargs),
+			nn.BatchNorm2d(64),
 			Graph_Conv_Block(64, 128, kernel_size, 1, **kwargs),
 			Graph_Conv_Block(128, 128, kernel_size, 1, **kwargs),
 			Graph_Conv_Block(128, 128, kernel_size, 1, **kwargs),
+			nn.BatchNorm2d(128),
 			Graph_Conv_Block(128, 256, kernel_size, 1, **kwargs),
 			Graph_Conv_Block(256, 256, kernel_size, 1, **kwargs),
 			Graph_Conv_Block(256, 256, kernel_size, 1, **kwargs),
+			nn.BatchNorm2d(256),
 			Graph_Conv_Block(256, 512, kernel_size, 1, **kwargs),
 		))
 
@@ -111,21 +116,28 @@ class Model(nn.Module):
 		return now_feat
 
 	def forward(self, pra_x, pra_A, pra_teacher_forcing_ratio=0, pra_teacher_location=None):
-		# data normalization
-		N, C, T, V = pra_x.size()
-		x = pra_x.permute(0, 3, 1, 2).contiguous()
-		x = x.view(N, V * C, T)
-		x = self.data_bn(x)
-		x = x.view(N, V, C, T)
-		x = x.permute(0, 2, 3, 1).contiguous()
-		x = x.view(N, C, T, V)
+		# # data normalization
+		# # 1D 
+		# N, C, T, V = pra_x.size()
+		# x = pra_x.permute(0, 3, 1, 2).contiguous()
+		# x = x.view(N, V * C, T)
+		# x = self.data_bn(x)
+		# x = x.view(N, V, C, T)
+		# x = x.permute(0, 2, 3, 1).contiguous()
+		# x = x.view(N, C, T, V)
 
-		# print(x.data)
+		# 2D
+		# x = self.data_bn_2d(pra_x)
+
+		x = pra_x
 		
 		# forwad
 		for gcn, importance in zip(self.st_gcn_networks, self.edge_importance):
 			# print(x.shape, pra_A.shape, importance.shape)
-			x, _ = gcn(x, pra_A[0] * importance)
+			if type(gcn) is nn.BatchNorm2d:
+				x = gcn(x)
+			else:
+				x, _ = gcn(x, pra_A[0] * importance)
 			# print('importance', np.sum(importance), self.edge_importance)
 		
 		# print(x)

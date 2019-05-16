@@ -104,6 +104,12 @@ def preprocess_data(pra_data, pra_rescale_xy):
 	# data[:, 1:2] = data[:, 1:2]/max_y
 	# data[:,1] = data[:, 1] + (np.random.random()*2-1) * 100. # random shift along y axis (data augmentation)
 	data[:,:2] = data[:,:2] / pra_rescale_xy
+
+	# output_mask = (pra_data[:,2:3]>0).float().to(dev)
+	# hist_car = (((pra_data[:,2:3, :history_frames]==1).float() + (pra_data[:,2:3, :history_frames]==2).float())>0).float().to(dev)
+	# output_mask[:,:,:history_frames] = hist_car
+	# data = data * output_mask
+
 	return data
 	
 
@@ -195,8 +201,8 @@ def train_model(pra_model, pra_data_loader, pra_optimizer, pra_epoch_log):
 		# bike_sum_time, bike_num, _ = compute_RMSE(predicted, output_loc_GT, bike_mask, pra_error_order=2)		
 		# bike_loss = torch.sum(bike_sum_time) / torch.max(torch.sum(bike_num), torch.ones(1,).to(dev))
 
-		# total_loss = 0.20*car_loss + 0.58*human_loss + 0.22*bike_loss
-		# total_loss = car_loss
+		# total_loss = 0.4*car_loss + 0.3*human_loss + 0.3*bike_loss
+		# # total_loss = car_loss
 
 		# predicted = predicted *pra_rescale_xy
 		# output_loc_GT = output_loc_GT *rescale_xy
@@ -432,12 +438,12 @@ if __name__ == '__main__':
 	model = Model(in_channels=4, pred_length=6, graph_args=graph_args, edge_importance_weighting=True)
 	model.to(dev)
 
-	# # train and evaluate model
-	# run_trainval(model, '/data/xincoder/ApolloScape/Baidu/train_data.pkl')
+	# train and evaluate model
+	run_trainval(model, '/data/xincoder/ApolloScape/Baidu/train_data.pkl')
 	
-	pretrained_model_path = '/data/xincoder/GRIP/weights/model_epoch_0197.pt'
-	model = my_load_model(model, pretrained_model_path)
-	run_test(model, '/data/xincoder/ApolloScape/Baidu/test_data.pkl')
+	# pretrained_model_path = '/data/xincoder/GRIP/weights/model_epoch_0197.pt'
+	# model = my_load_model(model, pretrained_model_path)
+	# run_test(model, '/data/xincoder/ApolloScape/Baidu/test_data.pkl')
 	
 		
 		
