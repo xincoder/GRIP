@@ -79,17 +79,50 @@ class Feeder(torch.utils.data.Dataset):
 
 
 if __name__ == "__main__":
-	# feeder = Feeder(data_path='/Users/xincoder/Documents/Dataset/ApolloScape/Baidu/train_data.pkl', graph_args={'num_node':70,'max_hop':2})
-	feeder = Feeder(data_path='/data/xincoder/ApolloScape/Baidu/train_data.pkl', graph_args={'num_node':120,'max_hop':2}, train_val_test='test')
+	feeder = Feeder(data_path='/Users/xincoder/Documents/Dataset/ApolloScape/Baidu/120object_all_objects_10meters/train_data.pkl', graph_args={'num_node':120,'max_hop':2})
+	# feeder = Feeder(data_path='/data/xincoder/ApolloScape/Baidu/train_data.pkl', graph_args={'num_node':120,'max_hop':2}, train_val_test='test')
 	min_x = 99999999
 	max_x = -99999999
 	min_y = 99999999
 	max_y = -9999999999
 	for data, now_A,_ in feeder:
+		# new_data = data.copy()
+		new_mask = (data[3:5, 1:]!=0) * (data[3:5, :-1]!=0) * (data[2,1:]==4)
+		data[3:5, 1:] = (data[3:5, 1:] - data[3:5, :-1]) * new_mask
+		data[3:5, 0] = 0	
+
 		# print(np.shape(data), np.shape(now_A))
 		# print(np.min(data[0]), np.max(data[1]), np.min(data[1]), np.max(data[1]))
+		# if np.min(data[3]) == -72.303:
+		# 	print(data[3:5])
+
+		# data[3][np.where(data[3]==-72.303)] = 0
+		# data[3][np.where(data[3]==34.31999999999999)] = 0
 		min_x = min(min_x, np.min(data[3]))
 		max_x = max(max_x, np.max(data[3]))
 		min_y = min(min_y, np.min(data[4]))
 		max_y = max(max_y, np.max(data[4]))
-		print(min_x, max_x, min_y, max_y)
+		print(min_x, max_x, min_y, max_y, set(np.abs(data[3:5]).flatten().astype(int)))
+
+
+	# # C = 11: [frame_id, object_id, object_type, position_x, position_y, position_z, object_length, pbject_width, pbject_height, heading] + [mask]
+	# for data, now_A, _ in feeder:
+	# 	new_data = data.copy()
+	# 	new_mask = (new_data[3:5, 1:]!=0) * (new_data[3:5, :-1]!=0)
+	# 	new_data[3:5, 1:] = (new_data[3:5, 1:] - new_data[3:5, :-1]) * new_mask
+	# 	new_data[3:5, 0] = 0
+	# 	# print(data.shape)
+	# 	for i in range(120):
+	# 		x = data[3, :, i]
+	# 		y = data[4, :, i]
+	# 		print(i)
+	# 		print('x', ' '.join(x.astype(str)))
+	# 		print('y', ' '.join(y.astype(str)))
+			
+	# 		x = new_data[3, :, i]
+	# 		y = new_data[4, :, i]
+	# 		print('x', ' '.join(x.astype(str)))
+	# 		print('y', ' '.join(y.astype(str)))
+
+	# 		print('')
+

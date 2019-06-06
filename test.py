@@ -11,6 +11,7 @@ from xin_feeder_baidu import Feeder
 from datetime import datetime
 import random
 
+# 1. split data into 90% training and 10% testing
 CUDA_VISIBLE_DEVICES='0'
 os.environ["CUDA_VISIBLE_DEVICES"] = CUDA_VISIBLE_DEVICES
 
@@ -26,8 +27,8 @@ def seed_torch(seed=0):
 	torch.backends.cudnn.deterministic = True
 seed_torch()
 
-max_x = 150. #130.
-max_y = 150. #130.
+max_x = 1. #35. #150. #130.
+max_y = 1. #35. #150. #130.
 history_frames = 6 # 3 second * 2 frame/second
 future_frames = 6 # 3 second * 2 frame/second
 
@@ -97,8 +98,15 @@ def preprocess_data(pra_data, pra_rescale_xy):
 	# pra_data: (N, C, T, V)
 	# C = 11: [frame_id, object_id, object_type, position_x, position_y, position_z, object_length, pbject_width, pbject_height, heading] + [mask]	
 	feature_id = [3, 4, 9, 10]
-	data = pra_data[:,feature_id]
+	ori_data = pra_data[:,feature_id].detach()
+	data = ori_data.detach().clone()
+
+	new_mask = (data[:, :2, 1:]!=0) * (data[:, :2, :-1]!=0)
+	data[:, :2, 1:] = (data[:, :2, 1:] - data[:, :2, :-1]).float() * new_mask.float()
+	data[:, :2, 0] = 0	
+
 	data = data.float().to(dev)
+	ori_data = ori_data.float().to(dev)
 	# print(data.shape)
 	# data[:, :1] = data[:, :1]/max_x
 	# data[:, 1:2] = data[:, 1:2]/max_y
@@ -110,7 +118,7 @@ def preprocess_data(pra_data, pra_rescale_xy):
 	# output_mask[:,:,:history_frames] = hist_car
 	# data = data * output_mask
 
-	return data
+	return data, ori_data
 	
 
 def compute_RMSE(pra_pred, pra_GT, pra_mask, pra_error_order=2):
@@ -156,7 +164,7 @@ def train_model(pra_model, pra_data_loader, pra_optimizer, pra_epoch_log):
 	for iteration, (ori_data, A, _) in enumerate(pra_data_loader):
 		# ori_data: (N, C, T, V)
 		# C = 11: [frame_id, object_id, object_type, position_x, position_y, position_z, object_length, pbject_width, pbject_height, heading] + [mask]
-		data = preprocess_data(ori_data, rescale_xy)
+		data, _ = preprocess_data(ori_data, rescale_xy)
 		input_data = data[:,:,:history_frames,:] # (N, C, T, V)=(N, 4, 6, 70)
 		output_loc_GT = data[:,:2,history_frames:,:] # (N, C, T, V)=(N, 2, 6, 70)
 		output_mask = data[:,-1:,history_frames:,:] # (N, C, T, V)=(N, 1, 6, 70)
@@ -176,7 +184,7 @@ def train_model(pra_model, pra_data_loader, pra_optimizer, pra_epoch_log):
 		########################################################
 		# We use abs to compute loss to backward update weights
 		# (N, T), (N, T)
-		overall_sum_time, overall_num, _ = compute_RMSE(predicted, output_loc_GT, output_mask, pra_error_order=2)
+		overall_sum_time, overall_num, _ = compute_RMSE(predicted, output_loc_GT, output_mask, pra_error_order=1)
 		# overall_loss
 		total_loss = torch.sum(overall_sum_time) / torch.max(torch.sum(overall_num), torch.ones(1,).to(dev)) #(1,)
 		
@@ -235,10 +243,13 @@ def val_model(pra_model, pra_data_loader):
 	for iteration, (ori_data, A, _) in enumerate(pra_data_loader):
 		# data: (N, C, T, V)
 		# C = 11: [frame_id, object_id, object_type, position_x, position_y, position_z, object_length, pbject_width, pbject_height, heading] + [mask]
-		data = preprocess_data(ori_data, rescale_xy)
+		data, no_norm_loc_data = preprocess_data(ori_data, rescale_xy)
 		input_data = data[:,:,:history_frames,:] # (N, C, T, V)=(N, 4, 6, 70)
 		output_loc_GT = data[:,:2,history_frames:,:] # (N, C, T, V)=(N, 2, 6, 70)
 		output_mask = data[:,-1:,history_frames:,:] # (N, C, T, V)=(N, 1, 6, 70)
+
+		ori_output_loc_GT = no_norm_loc_data[:,:2,history_frames:,:]
+		ori_output_last_loc = no_norm_loc_data[:,:2,history_frames-1:history_frames,:]
 
 		# for category
 		cat_mask = ori_data[:,2:3, history_frames:, :] # (N, C, T, V)=(N, 1, 6, 70)
@@ -248,11 +259,16 @@ def val_model(pra_model, pra_data_loader):
 		########################################################
 		# Compute details for training
 		########################################################
-		# (N, T), (N, T), (N, T), (N, T)
 		predicted = predicted*rescale_xy
-		output_loc_GT = output_loc_GT*rescale_xy
+		# output_loc_GT = output_loc_GT*rescale_xy
+
+		for ind in range(1, predicted.shape[-2]):
+			predicted[:,:,ind] = torch.sum(predicted[:,:,ind-1:ind+1], dim=-2)
+		predicted += ori_output_last_loc
+
 		### overall dist
-		overall_sum_time, overall_num, x2y2 = compute_RMSE(predicted, output_loc_GT, output_mask)		
+		# overall_sum_time, overall_num, x2y2 = compute_RMSE(predicted, output_loc_GT, output_mask)		
+		overall_sum_time, overall_num, x2y2 = compute_RMSE(predicted, ori_output_loc_GT, output_mask)		
 		# all_overall_sum_list.extend(overall_sum_time.detach().cpu().numpy())
 		all_overall_num_list.extend(overall_num.detach().cpu().numpy())
 		# x2y2 (N, 6, 39)
@@ -263,7 +279,7 @@ def val_model(pra_model, pra_data_loader):
 		### car dist
 		car_mask = (((cat_mask==1)+(cat_mask==2))>0).float().to(dev)
 		car_mask = output_mask * car_mask
-		car_sum_time, car_num, car_x2y2 = compute_RMSE(predicted, output_loc_GT, car_mask)		
+		car_sum_time, car_num, car_x2y2 = compute_RMSE(predicted, ori_output_loc_GT, car_mask)		
 		all_car_num_list.extend(car_num.detach().cpu().numpy())
 		# x2y2 (N, 6, 39)
 		car_x2y2 = car_x2y2.detach().cpu().numpy()
@@ -273,7 +289,7 @@ def val_model(pra_model, pra_data_loader):
 		### human dist
 		human_mask = (cat_mask==3).float().to(dev)
 		human_mask = output_mask * human_mask
-		human_sum_time, human_num, human_x2y2 = compute_RMSE(predicted, output_loc_GT, human_mask)		
+		human_sum_time, human_num, human_x2y2 = compute_RMSE(predicted, ori_output_loc_GT, human_mask)		
 		all_human_num_list.extend(human_num.detach().cpu().numpy())
 		# x2y2 (N, 6, 39)
 		human_x2y2 = human_x2y2.detach().cpu().numpy()
@@ -283,7 +299,7 @@ def val_model(pra_model, pra_data_loader):
 		### bike dist
 		bike_mask = (cat_mask==4).float().to(dev)
 		bike_mask = output_mask * bike_mask
-		bike_sum_time, bike_num, bike_x2y2 = compute_RMSE(predicted, output_loc_GT, bike_mask)		
+		bike_sum_time, bike_num, bike_x2y2 = compute_RMSE(predicted, ori_output_loc_GT, bike_mask)		
 		all_bike_num_list.extend(bike_num.detach().cpu().numpy())
 		# x2y2 (N, 6, 39)
 		bike_x2y2 = bike_x2y2.detach().cpu().numpy()
@@ -360,14 +376,20 @@ def test_model(pra_model, pra_data_loader):
 		for iteration, (ori_data, A, mean_xy) in enumerate(pra_data_loader):
 			# data: (N, C, T, V)
 			# C = 11: [frame_id, object_id, object_type, position_x, position_y, position_z, object_length, pbject_width, pbject_height, heading] + [mask]
-			data = preprocess_data(ori_data, rescale_xy)
+			data, no_norm_loc_data = preprocess_data(ori_data, rescale_xy)
 			input_data = data[:,:,:history_frames,:] # (N, C, T, V)=(N, 4, 6, 70)
 			output_mask = data[:,-1,-1,:] # (N, V)=(N, 70)
 			# print(data.shape, A.shape, mean_xy.shape, input_data.shape)
 
+			ori_output_last_loc = no_norm_loc_data[:,:2,history_frames-1:history_frames,:]
+		
 			A = A.float().to(dev)
 			predicted = pra_model(pra_x=input_data, pra_A=A, pra_teacher_forcing_ratio=0, pra_teacher_location=None) # (N, C, T, V)=(N, 2, 6, 70)
 			predicted = predicted *rescale_xy 
+
+			for ind in range(1, predicted.shape[-2]):
+				predicted[:,:,ind] = torch.sum(predicted[:,:,ind-1:ind+1], dim=-2)
+			predicted += ori_output_last_loc
 
 			now_pred = predicted.detach().cpu().numpy() # (N, C, T, V)=(N, 2, 6, 70)
 			now_mean_xy = mean_xy.detach().cpu().numpy() # (N, 2)
@@ -441,7 +463,7 @@ if __name__ == '__main__':
 	# train and evaluate model
 	run_trainval(model, '/data/xincoder/ApolloScape/Baidu/train_data.pkl')
 	
-	# pretrained_model_path = '/data/xincoder/GRIP/weights/model_epoch_0197.pt'
+	# pretrained_model_path = '/data/xincoder/GRIP/weights/model_epoch_0228.pt'
 	# model = my_load_model(model, pretrained_model_path)
 	# run_test(model, '/data/xincoder/ApolloScape/Baidu/test_data.pkl')
 	

@@ -39,7 +39,8 @@ class DecoderRNN(nn.Module):
 		# decoded_output = self.tanh(decoded_output)
 		# decoded_output = self.sigmoid(decoded_output)
 		decoded_output = self.dropout(decoded_output)
-		decoded_output = self.tanh(self.linear(decoded_output))
+		# decoded_output = self.tanh(self.linear(decoded_output))
+		decoded_output = self.linear(decoded_output)
 		# decoded_output = self.sigmoid(self.linear(decoded_output))
 		return decoded_output, hidden
 
