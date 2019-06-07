@@ -27,8 +27,8 @@ def seed_torch(seed=0):
 	torch.backends.cudnn.deterministic = True
 seed_torch()
 
-max_x = 1. #35. #150. #130.
-max_y = 1. #35. #150. #130.
+max_x = 10. #35. #150. #130.
+max_y = 10. #35. #150. #130.
 history_frames = 6 # 3 second * 2 frame/second
 future_frames = 6 # 3 second * 2 frame/second
 
@@ -39,7 +39,8 @@ total_epoch = 500
 base_lr = 0.01
 lr_decay_epoch = 5
 dev = 'cuda:0' #'cpu'
-work_dir = '/data/xincoder/GRIP/weights'
+work_dir = '/data/xincoder/GRIP/weights_10'
+# work_dir = './weights_{}'.format(batch_size_train)
 log_file = os.path.join(work_dir,'log_test.txt')
 test_result_file = 'prediction_result.txt'
 
@@ -462,8 +463,9 @@ if __name__ == '__main__':
 
 	# train and evaluate model
 	run_trainval(model, '/data/xincoder/ApolloScape/Baidu/train_data.pkl')
+	# run_trainval(model, '/MISC_2/xin.li1/code/GRIP/data/train_data.pkl')
 	
-	# pretrained_model_path = '/data/xincoder/GRIP/weights/model_epoch_0228.pt'
+	# pretrained_model_path = '/data/xincoder/GRIP/weights_10/model_epoch_0304.pt'
 	# model = my_load_model(model, pretrained_model_path)
 	# run_test(model, '/data/xincoder/ApolloScape/Baidu/test_data.pkl')
 	
