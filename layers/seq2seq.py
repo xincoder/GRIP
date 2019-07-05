@@ -14,7 +14,8 @@ class EncoderRNN(nn.Module):
 		self.hidden_size = hidden_size
 		self.num_layers = num_layers
 		self.isCuda = isCuda
-		self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
+		# self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
+		self.lstm = nn.GRU(input_size, hidden_size, num_layers, batch_first=True)
 		
 	def forward(self, input):
 		output, hidden = self.lstm(input)
@@ -27,7 +28,8 @@ class DecoderRNN(nn.Module):
 		self.output_size = output_size
 		self.num_layers = num_layers
 		self.isCuda = isCuda
-		self.lstm = nn.LSTM(hidden_size, output_size, num_layers, batch_first=True)
+		# self.lstm = nn.LSTM(hidden_size, output_size, num_layers, batch_first=True)
+		self.lstm = nn.GRU(hidden_size, output_size, num_layers, batch_first=True)
 		#self.relu = nn.ReLU()
 		self.sigmoid = nn.Sigmoid()
 		self.dropout = nn.Dropout(p=dropout)

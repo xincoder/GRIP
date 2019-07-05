@@ -55,7 +55,7 @@ class ConvTemporalGraphical(nn.Module):
             bias=bias)
 
     def forward(self, x, A):
-        assert A.size(0) == self.kernel_size
+        # assert A.size(0) == self.kernel_size
 
         x = self.conv(x)
 
