@@ -5,77 +5,29 @@ from torch.autograd import Variable
 
 from layers.graph import Graph
 from layers.graph_conv_block import Graph_Conv_Block
-from layers.seq2seq import Seq2Seq
+from layers.seq2seq import Seq2Seq, EncoderRNN
 import numpy as np 
 
 class Model(nn.Module):
-	def __init__(self, in_channels, pred_length, graph_args, edge_importance_weighting, **kwargs):
+	def __init__(self, in_channels, graph_args, edge_importance_weighting, **kwargs):
 		super().__init__()
 
 		# load graph
 		self.graph = Graph(**graph_args)
-		# A = torch.tensor(self.graph.A, dtype=torch.float32, requires_grad=False)
-		# print(A.shape)
-		# A = self.graph.get_adjacency().copy()
-		# A = self.graph.normalize_adjacency(A)
-		# A = self.graph.A
-		# print(np.shape(A))
-		# A = self.graph.normalize_adjacency(A)
-		# self.register_buffer('A', A)
-		# {'max_hop':1, 'num_node':70}
-		A = np.zeros((graph_args['max_hop']+1, graph_args['num_node'], graph_args['num_node']))
+		A = np.ones((graph_args['max_hop']+1, graph_args['num_node'], graph_args['num_node']))
 
 		# build networks
 		spatial_kernel_size = np.shape(A)[0]
-		temporal_kernel_size = 9 #5 # 3
+		temporal_kernel_size = 5 #9 #5 # 3
 		kernel_size = (temporal_kernel_size, spatial_kernel_size)
-		# self.data_bn = nn.BatchNorm1d(in_channels * np.shape(A)[1])
-		# self.data_bn_2d = nn.BatchNorm2d(in_channels)
-		# self.st_gcn_networks = nn.ModuleList((
-		# 	Graph_Conv_Block(in_channels, 64, kernel_size, 1, residual=True, **kwargs),
-		# 	Graph_Conv_Block(64, 64, kernel_size, 1, **kwargs),
-		# 	Graph_Conv_Block(64, 64, kernel_size, 1, **kwargs),
-		# 	Graph_Conv_Block(64, 64, kernel_size, 1, **kwargs),
-		# 	Graph_Conv_Block(64, 128, kernel_size, 1, **kwargs),
-		# 	Graph_Conv_Block(128, 128, kernel_size, 1, **kwargs),
-		# 	Graph_Conv_Block(128, 128, kernel_size, 1, **kwargs),
-		# 	Graph_Conv_Block(128, 256, kernel_size, 1, **kwargs),
-		# 	Graph_Conv_Block(256, 256, kernel_size, 1, **kwargs),
-		# 	Graph_Conv_Block(256, 256, kernel_size, 1, **kwargs),
-		# ))
 
+		# best
 		self.st_gcn_networks = nn.ModuleList((
 			nn.BatchNorm2d(in_channels),
 			Graph_Conv_Block(in_channels, 64, kernel_size, 1, residual=True, **kwargs),
 			Graph_Conv_Block(64, 64, kernel_size, 1, **kwargs),
 			Graph_Conv_Block(64, 64, kernel_size, 1, **kwargs),
-			nn.BatchNorm2d(64),
-			Graph_Conv_Block(64, 128, kernel_size, 1, **kwargs),
-			Graph_Conv_Block(128, 128, kernel_size, 1, **kwargs),
-			Graph_Conv_Block(128, 128, kernel_size, 1, **kwargs),
-			nn.BatchNorm2d(128),
-			Graph_Conv_Block(128, 256, kernel_size, 1, **kwargs),
-			Graph_Conv_Block(256, 256, kernel_size, 1, **kwargs),
-			Graph_Conv_Block(256, 256, kernel_size, 1, **kwargs),
-			nn.BatchNorm2d(256),
-			Graph_Conv_Block(256, 512, kernel_size, 1, **kwargs),
 		))
-
-		# self.st_gcn_networks = nn.ModuleList((
-		# 	Graph_Conv_Block(in_channels, 64, kernel_size, 1, residual=True, **kwargs),
-		# 	Graph_Conv_Block(64, 64, kernel_size, 1, **kwargs),
-		# 	Graph_Conv_Block(64, 64, kernel_size, 1, **kwargs),
-		# 	Graph_Conv_Block(64, 128, kernel_size, 1, **kwargs),
-		# 	Graph_Conv_Block(128, 128, kernel_size, 1, **kwargs),
-		# 	Graph_Conv_Block(128, 128, kernel_size, 1, **kwargs),
-		# 	Graph_Conv_Block(128, 256, kernel_size, 1, **kwargs),
-		# 	Graph_Conv_Block(256, 256, kernel_size, 1, **kwargs),
-		# 	Graph_Conv_Block(256, 256, kernel_size, 1, **kwargs),
-		# 	Graph_Conv_Block(256, 512, kernel_size, 1, **kwargs),
-		# 	Graph_Conv_Block(512, 512, kernel_size, 1, **kwargs),
-		# 	Graph_Conv_Block(512, 512, kernel_size, 1, **kwargs),
-		# 	Graph_Conv_Block(512, 1024, kernel_size, 1, **kwargs),
-		# ))
 
 		# initialize parameters for edge importance weighting
 		if edge_importance_weighting:
@@ -85,15 +37,12 @@ class Model(nn.Module):
 		else:
 			self.edge_importance = [1] * len(self.st_gcn_networks)
 
-		# fcn for prediction
-		# self.fcn = nn.Conv2d(256, num_class, kernel_size=1)
-		self.pred_length = pred_length
 		self.num_node = num_node = self.graph.num_node
-		out_dim_per_node = 2 #(x, y) coordinate
-		# self.seq2seq = Seq2Seq(input_size=num_node*(256), hidden_size=num_node*out_dim_per_node, pred_length=pred_length, num_layers=2, dropout=0.5, isCuda=True)
-		self.seq2seq = Seq2Seq(input_size=num_node*(512), hidden_size=num_node*out_dim_per_node, pred_length=pred_length, num_layers=2, dropout=0.5, isCuda=True)
-		# self.seq2seq = Seq2Seq(input_size=num_node*256, hidden_size=num_node*out_dim_per_node, pred_length=pred_length, num_layers=2, dropout=0.5, isCuda=True)
-		# self.seq2seq = Seq2Seq(input_size=self.graph.num_node*256, hidden_size=num_node*out_dim_per_node, pred_length=pred_length, num_layers=2, dropout=0.5, isCuda=True)
+		self.out_dim_per_node = out_dim_per_node = 2 #(x, y) coordinate
+		self.seq2seq_car = Seq2Seq(input_size=(64), hidden_size=out_dim_per_node, num_layers=2, dropout=0.5, isCuda=True)
+		self.seq2seq_human = Seq2Seq(input_size=(64), hidden_size=out_dim_per_node, num_layers=2, dropout=0.5, isCuda=True)
+		self.seq2seq_bike = Seq2Seq(input_size=(64), hidden_size=out_dim_per_node, num_layers=2, dropout=0.5, isCuda=True)
+
 
 	def reshape_for_lstm(self, feature):
 		# prepare for skeleton prediction model
@@ -104,76 +53,45 @@ class Model(nn.Module):
 		V: nodes
 		'''
 		N, C, T, V = feature.size() 
-		now_feat = feature.permute(0, 2, 3, 1).contiguous()
-		now_feat = now_feat.view(N, T, V*C) 
+		now_feat = feature.permute(0, 3, 2, 1).contiguous() # to (N, V, T, C)
+		now_feat = now_feat.view(N*V, T, C) 
 		return now_feat
 
 	def reshape_from_lstm(self, predicted):
-		# predicted (N, T, V*C)
-		N, T, _ = predicted.size()
-		now_feat = predicted.view(N, T, self.num_node, -1) # (N, T, V, C) -> (N, C, T, V)
-		now_feat = now_feat.permute(0, 3, 1, 2).contiguous()
+		# predicted (N*V, T, C)
+		NV, T, C = predicted.size()
+		now_feat = predicted.view(-1, self.num_node, T, self.out_dim_per_node) # (N, T, V, C) -> (N, C, T, V) [(N, V, T, C)]
+		now_feat = now_feat.permute(0, 3, 2, 1).contiguous() # (N, C, T, V)
 		return now_feat
 
-	def forward(self, pra_x, pra_A, pra_teacher_forcing_ratio=0, pra_teacher_location=None):
-		# # data normalization
-		# # 1D 
-		# N, C, T, V = pra_x.size()
-		# x = pra_x.permute(0, 3, 1, 2).contiguous()
-		# x = x.view(N, V * C, T)
-		# x = self.data_bn(x)
-		# x = x.view(N, V, C, T)
-		# x = x.permute(0, 2, 3, 1).contiguous()
-		# x = x.view(N, C, T, V)
-
-		# 2D
-		# x = self.data_bn_2d(pra_x)
-
+	def forward(self, pra_x, pra_A, pra_pred_length, pra_teacher_forcing_ratio=0, pra_teacher_location=None):
 		x = pra_x
 		
 		# forwad
 		for gcn, importance in zip(self.st_gcn_networks, self.edge_importance):
-			# print(x.shape, pra_A.shape, importance.shape)
 			if type(gcn) is nn.BatchNorm2d:
 				x = gcn(x)
 			else:
-				x, _ = gcn(x, pra_A[0] * importance)
-			# print('importance', np.sum(importance), self.edge_importance)
-		
-		# print(x)
-		# # forwad
-		# for gcn in self.st_gcn_networks:
-		# 	# print(x.shape, pra_A.shape, importance.shape)
-		# 	x, _ = gcn(x, pra_A[0])
-		# print(x.data)
-
-		# print(x.shape, pra_x.shape)
-		# x = torch.cat((x, pra_x), dim=1)
-
-		# now x shape: (N, C, T, V) = (N, 256, 4, 39)
+				x, _ = gcn(x, pra_A + importance)
+				
 		# prepare for seq2seq lstm model
 		graph_conv_feature = self.reshape_for_lstm(x)
-		last_position = self.reshape_for_lstm(pra_x[:,:2]) #(N, C, T, V)[:, :2] -> (N, T, V*2)
+		last_position = self.reshape_for_lstm(pra_x[:,:2]) #(N, C, T, V)[:, :2] -> (N, T, V*2) [(N*V, T, C)]
 
 		if pra_teacher_forcing_ratio>0 and type(pra_teacher_location) is not type(None):
 			pra_teacher_location = self.reshape_for_lstm(pra_teacher_location)
 
 		# now_predict.shape = (N, T, V*C)
-		now_predict = self.seq2seq(in_data=graph_conv_feature, last_location=last_position[:,-1:,:], teacher_forcing_ratio=pra_teacher_forcing_ratio, teacher_location=pra_teacher_location)
-		# print('data', torch.min(pra_x), torch.max(pra_x[:,:2]), torch.min(now_predict), torch.max(now_predict))
-		now_predict = self.reshape_from_lstm(now_predict) # (N, C, T, V)
+		now_predict_car = self.seq2seq_car(in_data=graph_conv_feature, last_location=last_position[:,-1:,:], pred_length=pra_pred_length, teacher_forcing_ratio=pra_teacher_forcing_ratio, teacher_location=pra_teacher_location)
+		now_predict_car = self.reshape_from_lstm(now_predict_car) # (N, C, T, V)
 
-		# (N, C, T, V) 
-		# C: (4) x_mean, y_mean, x_sig, y_sig
-		now_predict_loc = now_predict[:, :2] # mean x,y
-		
+		now_predict_human = self.seq2seq_human(in_data=graph_conv_feature, last_location=last_position[:,-1:,:], pred_length=pra_pred_length, teacher_forcing_ratio=pra_teacher_forcing_ratio, teacher_location=pra_teacher_location)
+		now_predict_human = self.reshape_from_lstm(now_predict_human) # (N, C, T, V)
 
-		# print('data', pra_x.shape, now_predict.shape, pra_x.min().item(), pra_x[:,:2].max().item(), now_predict.min().item(), now_predict.max().item())
-		# print('')
-		# if pra_teacher_forcing_ratio==-1:
-		# 	print('pra_x', pra_x[0,:2,:,19].flatten())
-		# 	print('predx', now_predict[0,:2,:,19].flatten())
-		# 	print('gt', pra_teacher_location[0,:2,:,19].flatten())
+		now_predict_bike = self.seq2seq_bike(in_data=graph_conv_feature, last_location=last_position[:,-1:,:], pred_length=pra_pred_length, teacher_forcing_ratio=pra_teacher_forcing_ratio, teacher_location=pra_teacher_location)
+		now_predict_bike = self.reshape_from_lstm(now_predict_bike) # (N, C, T, V)
+
+		now_predict = (now_predict_car + now_predict_human + now_predict_bike)/3.
 
 		return now_predict 
 
