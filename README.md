@@ -44,6 +44,12 @@ Once you trained the model, you can test the trained models on the testing subse
 ||
 |GRIP|Combine|1.2588|2.2400|0.7142|1.8024|2.3631|4.0762|1.3732|3.4155|
 
+We use the following way to combine multiple results.
+
+- epoch20 -> 1, 2 (car)
+- epoch18 -> 3 (pedestrian)
+- epoch16 -> 4 (bike)
+
 ___
 
 ### Citation
