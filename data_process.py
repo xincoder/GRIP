@@ -1,15 +1,11 @@
 import numpy as np 
 import glob
 import os 
-import matplotlib.pyplot as plt
 from scipy import spatial 
 import pickle
 
-# # panda
-# data_root = '/Users/xincoder/Documents/Dataset/ApolloScape'
-
-# local
-data_root = '/Users/xincoder/Documents/Dataset/ApolloScape'
+# Please change this to your location
+data_root = '/data/xincoder/ApolloScape/'
 
 
 history_frames = 6 # 3 second * 2 frame/second

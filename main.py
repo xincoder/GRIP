@@ -36,7 +36,7 @@ total_epoch = 50
 base_lr = 0.01
 lr_decay_epoch = 5
 dev = 'cuda:0' 
-work_dir = '/data/xincoder/GRIP/with_testing_data_orival_3gcn_correctgraph'
+work_dir = './trained_models'
 log_file = os.path.join(work_dir,'log_test.txt')
 test_result_file = 'prediction_result.txt'
 
@@ -353,11 +353,11 @@ if __name__ == '__main__':
 	model.to(dev)
 
 	# train and evaluate model
-	run_trainval(model, pra_traindata_path='/data/xincoder/ApolloScape/Baidu/train_data.pkl', pra_testdata_path='/data/xincoder/ApolloScape/Baidu/test_data.pkl')
+	run_trainval(model, pra_traindata_path='./train_data.pkl', pra_testdata_path='./test_data.pkl')
 	
-	# pretrained_model_path = '/data/xincoder/GRIP/with_testing_data_orival_3gcn_correctgraph/model_epoch_0016.pt'
+	# pretrained_model_path = './trained_models/model_epoch_0016.pt'
 	# model = my_load_model(model, pretrained_model_path)
-	# run_test(model, '/data/xincoder/ApolloScape/Baidu/test_data.pkl')
+	# run_test(model, './test_data.pkl')
 	
 		
 		
