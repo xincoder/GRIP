@@ -55,7 +55,7 @@ ___
 ### Citation
 Please cite our paper if you used our code. Thanks.
 ``` 
-@inproceedings{2019wacv_dac,
+@inproceedings{2019itsc_grip,
  author = {Li, Xin and Ying, Xiaowen and Chuah, Mooi Choo},
  booktitle = {2019 IEEE INTELLIGENT TRANSPORTATION SYSTEMS CONFERENCE (ITSC)},
  organization = {IEEE},
