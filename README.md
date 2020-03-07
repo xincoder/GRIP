@@ -3,6 +3,10 @@
 This repository is the code of [GRIP: Graph-based Interaction-aware Trajectory Prediction](https://arxiv.org/abs/1907.07792) on the [Baidu Apollo Trajectory dataset](http://apolloscape.auto/trajectory.html#). 
 
 ___
+### License
+This code is shared only for research purposes, and this cannot be used for any commercial purposes. 
+
+___
 ### Training 
 
 1. Modify "data_root" in data_process.py and then run the script to preprocess the data. 
