@@ -1,6 +1,6 @@
 # GRIP
 
-This repository is the code of [GRIP++: Enhanced Graph-based Interaction-aware Trajectory Prediction for Autonomous Driving](https://arxiv.org/abs/1907.07792) on the Baidu Apollo Trajectory dataset. GRIP++ is an enhanced version of our [GRIP: Graph-based Interaction-aware Trajectory Prediction](https://ieeexplore.ieee.org/abstract/document/8917228).
+This repository is the code of [GRIP++: Enhanced Graph-based Interaction-aware Trajectory Prediction for Autonomous Driving](https://arxiv.org/abs/1907.07792) on the Baidu Apollo Trajectory dataset. GRIP++ is an enhanced version of our GRIP ([GRIP: Graph-based Interaction-aware Trajectory Prediction](https://ieeexplore.ieee.org/abstract/document/8917228)).
 
 ___
 ### License
