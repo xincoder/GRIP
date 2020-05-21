@@ -1,6 +1,6 @@
 # GRIP
 
-This repository is the code of [GRIP: Graph-based Interaction-aware Trajectory Prediction](https://arxiv.org/abs/1907.07792) on the [Baidu Apollo Trajectory dataset](http://apolloscape.auto/trajectory.html#). 
+This repository is the code of [GRIP++: Enhanced Graph-based Interaction-aware Trajectory Prediction for Autonomous Driving](https://arxiv.org/abs/1907.07792) on the Baidu Apollo Trajectory dataset. GRIP++ is an enhanced version of our [GRIP: Graph-based Interaction-aware Trajectory Prediction](https://ieeexplore.ieee.org/abstract/document/8917228).
 
 ___
 ### License
@@ -57,7 +57,7 @@ We use the following way to combine multiple results.
 ___
 
 ### Citation
-Please cite our paper if you used our code. Thanks.
+Please cite our papers if you used our code. Thanks.
 ``` 
 @inproceedings{2019itsc_grip,
  author = {Li, Xin and Ying, Xiaowen and Chuah, Mooi Choo},
@@ -65,5 +65,12 @@ Please cite our paper if you used our code. Thanks.
  organization = {IEEE},
  title = {GRIP: Graph-based Interaction-aware Trajectory Prediction},
  year = {2019}
+}
+
+@article{li2020gripplus,
+  title={GRIP++: Enhanced Graph-based Interaction-aware Trajectory Prediction for Autonomous Driving},
+  author={Li, Xin and Ying, Xiaowen and Chuah, Mooi Choo},
+  journal={arXiv preprint arXiv:1907.07792},
+  year={2020}
 }
 ```
