@@ -14,7 +14,7 @@ ___
 $ python data_process.py
 ```
 
-2. Train the model. We trained the model on a single Nvidia Titan Xp GPU. If your GPU has the same precision, you should get the exact same results. 
+2. Train the model. We trained the model on a single Nvidia Titan Xp GPU. If your GPU has the same precision, you should get the exact same results. The "training_log.txt" is my training log. If you download the code and run it directly, you should see similar outputs.
 ``` Bash
 $ python main.py
 
