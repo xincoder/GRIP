@@ -38,7 +38,7 @@ Once you trained the model, you can test the trained models on the testing subse
 - Our model predicts future locations for all observed objects simultaneously. 
 - Using separate models for different types of objects should achieve better performance. 
 
-|Epoch|Method|WSADE|ADEv|ADEp|ADEb|WSFDE|FDEv|FDEp|FDEb|
+|Method|Epoch|WSADE|ADEv|ADEp|ADEb|WSFDE|FDEv|FDEp|FDEb|
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 |TrafficPredict| |8.5881|7.9467|7.1811|12.8805|24.2262|12.7757|11.121|22.7912|
 ||
